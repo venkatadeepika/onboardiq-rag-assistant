@@ -23,6 +23,22 @@ keys.
 - **Error feedback:** Displays connection, missing-model, indexing, and
   generation errors in the interface, with diagnostic logs in the terminal.
 
+## Screenshots
+
+Captured from the running application with local Ollama models. All employee
+details shown are synthetic demo data.
+
+### Welcome screen and employee profile
+
+![Welcome screen with the synthetic employee sidebar](docs/screenshots/onboarding-home.png)
+
+### Policy question and response
+
+![Chat showing a leave-policy question and the local model's response](docs/screenshots/onboarding-policy-chat.png)
+
+These screenshots show actual demo output, not verified HR advice. Responses
+can vary and should be checked against the policy PDF.
+
 ## How it works
 
 ```text
