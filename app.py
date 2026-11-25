@@ -7,6 +7,7 @@ from langchain_chroma import Chroma
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from httpx import HTTPError
 from ollama import Client, ResponseError
+import logging
 import os
 from assistant import Assistant
 from gui import AssistantGUI
@@ -17,6 +18,8 @@ from data.employees import generate_employee_data
 if __name__ == "__main__":
 
     load_dotenv()
+
+    logging.basicConfig(level=logging.INFO)
 
     st.set_page_config(
         page_title="Umbrella Onboarding",
@@ -36,12 +39,14 @@ if __name__ == "__main__":
         for model in (chat_model, embedding_model):
             client.show(model)
     except ResponseError as e:
+        logging.error("Ollama model check failed: %s", e)
         if e.status_code == 404:
             st.error(f"Ollama model '{model}' is not installed. Run: ollama pull {model}")
         else:
             st.error(f"Ollama model check failed: {e}")
         st.stop()
     except (ConnectionError, HTTPError) as e:
+        logging.error("Cannot connect to Ollama: %s", e)
         st.error(f"Cannot connect to Ollama at {base_url}. Start the Ollama app or run: ollama serve")
         st.stop()
 
@@ -71,6 +76,7 @@ if __name__ == "__main__":
                 vector_store.add_documents(splits)
             return vector_store
         except (ConnectionError, HTTPError, ResponseError) as e:
+            logging.error("Ollama embedding request failed: %s", e)
             st.error(
                 "Ollama could not generate embeddings. Quit and reopen the Ollama app, "
                 "then rerun Streamlit. Do not change the temporary /tokenize port "
@@ -79,6 +85,7 @@ if __name__ == "__main__":
             )
             return None
         except Exception as e:
+            logging.error(f"Error initializing vector store: {str(e)}")
             st.error(f"Error initializing vector store: {str(e)}")
             return None
 

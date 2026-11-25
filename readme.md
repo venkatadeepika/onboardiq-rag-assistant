@@ -185,3 +185,17 @@ Ensure that the chatbot provides clear and helpful responses, augmenting answers
 Once completed, ensure your chatbot is functional in your forked repository. Let me know if you have any questions!
 
 Good luck!
+
+### Logging
+
+The application uses Python's standard logging module. Ollama connection and
+model errors, policy indexing failures, and response generation errors are
+logged to the terminal running Streamlit; user-facing errors also appear in
+the interface. This is basic diagnostic logging, not distributed tracing.
+No LangSmith integration or tracing API key is required.
+
+Run the offline regression tests on Windows:
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p test_ollama.py
+```

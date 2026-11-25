@@ -1,4 +1,5 @@
 import streamlit as st
+import logging
 from httpx import HTTPError
 from ollama import ResponseError
 
@@ -32,6 +33,7 @@ class AssistantGUI:
                 with st.chat_message("ai"):
                     response = st.write_stream(self.get_response(user_input))
             except (ConnectionError, HTTPError, ResponseError) as e:
+                logging.error("Ollama response failed: %s", e)
                 st.error(f"Ollama could not generate a response: {e}")
                 return
 
