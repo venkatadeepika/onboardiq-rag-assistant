@@ -14,7 +14,10 @@ keys.
   PDF using retrieval-augmented generation (RAG).
 - **Personalized responses:** Includes a generated employee profile in the
   prompt, with details such as role, department, skills, and supervisor.
-- **Employee sidebar:** Displays the synthetic profile alongside the chat.
+- **Employee sidebar:** Displays a labeled profile card instead of raw JSON,
+  with expandable skills, contact information, and additional profile details.
+- **Focused interface:** Hides Streamlit's running/stop/deploy toolbar while
+  keeping the sidebar toggle available.
 - **Streaming answers:** Shows the response as the local model generates it.
 - **Conversation context:** Keeps chat history and the selected employee in
   Streamlit session state.
@@ -26,11 +29,12 @@ keys.
 ## Screenshots
 
 Captured from the running application with local Ollama models. All employee
-details shown are synthetic demo data.
+details shown are synthetic demo data. The updated interface uses a labeled
+profile card and expandable sections, with Streamlit's toolbar hidden.
 
 ### Welcome screen and employee profile
 
-![Welcome screen with the synthetic employee sidebar](docs/screenshots/onboarding-home.png)
+![Welcome screen with the labeled employee profile and expandable details](docs/screenshots/onboarding-home.png)
 
 ### Policy question and response
 

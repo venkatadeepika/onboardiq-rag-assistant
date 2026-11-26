@@ -125,6 +125,64 @@ AssistantGUI(LocalAssistant()).render()
             [element.value for element in app.markdown].count("Local answer"), 1
         )
 
+    def test_gui_renders_labeled_profile_without_json(self):
+        app = AppTest.from_string(
+            """
+from gui import AssistantGUI
+
+class LocalAssistant:
+    messages = []
+    employee_information = {
+        "name": "Demo",
+        "lastname": "Employee",
+        "position": "Software Engineer",
+        "department": "IT",
+        "location": "Raccoon City HQ",
+        "supervisor": "Demo Supervisor",
+        "hire_date": "2026-01-01",
+        "skills": ["Python", "Data Analysis"],
+        "email": "demo@example.test",
+        "phone_number": "555-0100",
+        "employee_id": "demo-id",
+        "salary": 65000.5,
+    }
+
+AssistantGUI(LocalAssistant()).render()
+"""
+        ).run()
+
+        self.assertEqual(len(app.exception), 0)
+        self.assertEqual(len(app.json), 0)
+        self.assertIn("Your team", [element.value for element in app.caption])
+        self.assertEqual(
+            [element.value for element in app.text],
+            [
+                "Demo Employee", "Software Engineer", "IT", "Raccoon City HQ",
+                "Demo Supervisor", "2026-01-01", "Python", "Data Analysis",
+                "demo@example.test", "555-0100", "demo-id", "65,000.50",
+            ],
+        )
+        self.assertEqual(
+            [element.label for element in app.expander],
+            ["Your skills", "How to reach you", "More profile details"],
+        )
+
+    def test_gui_missing_profile_shows_notice(self):
+        app = AppTest.from_string(
+            """
+from gui import AssistantGUI
+
+class LocalAssistant:
+    messages = []
+    employee_information = None
+
+AssistantGUI(LocalAssistant()).render()
+"""
+        ).run()
+
+        self.assertEqual(len(app.exception), 0)
+        self.assertIn("No employee profile", app.info[0].value)
+
 
 if __name__ == "__main__":
     unittest.main()
