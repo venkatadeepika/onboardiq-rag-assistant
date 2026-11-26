@@ -4,9 +4,10 @@ A working Streamlit chatbot that answers employee onboarding questions using a
 company policy PDF and a synthetic employee profile. The demo uses the fictional
 Umbrella Corporation as its company setting.
 
-Built with **Python, Streamlit, LangChain, Chroma, and Ollama**, it runs language
-model inference and embedding generation locally, without a paid LLM API or API
-keys.
+Built with **Python, Streamlit, LangChain, Chroma, and Ollama**, with optional
+**LangSmith tracing and observability**. Language model inference and embedding
+generation run locally without a paid LLM API or LLM API keys. Cloud-hosted
+LangSmith tracing requires a separate account, API key, and internet connection.
 
 ## What I built
 
@@ -25,6 +26,9 @@ keys.
   reuses a nonempty index on subsequent starts.
 - **Error feedback:** Displays connection, missing-model, indexing, and
   generation errors in the interface, with diagnostic logs in the terminal.
+- **LangSmith observability:** Uses LangChain's environment-enabled tracing to
+  inspect the RAG chain, retrieval and model calls, inputs/outputs, execution
+  timing, and model-reported token usage.
 
 ## Screenshots
 
@@ -42,6 +46,15 @@ profile card and expandable sections, with Streamlit's toolbar hidden.
 
 These screenshots show actual demo output, not verified HR advice. Responses
 can vary and should be checked against the policy PDF.
+
+### LangSmith RAG trace
+
+![LangSmith trace showing the RAG chain, vector retrieval, Qwen model call, timing, token information, and generated output](docs/screenshots/onboarding-langsmith-trace.png)
+
+This captured demo trace shows a `RunnableSequence`, its `VectorStoreRetriever`
+call, and the `qwen2.5:1.5b` model call. The displayed timings and token
+information describe one run, not a performance benchmark. The dashboard's
+"Production" label does not mean this demo is a production-deployed HR system.
 
 ## How it works
 
@@ -61,6 +74,10 @@ On startup, the app checks that Ollama can access both configured models. If
 the Chroma collection is empty, it loads the PDF, splits it into 1,000-character
 chunks with 200-character overlap, and embeds those chunks. Each question
 retrieves policy context before the chat model generates an answer.
+
+When LangSmith tracing is enabled, LangChain also sends trace data to LangSmith
+for inspection. This does not move Ollama inference or the Chroma index to the
+cloud.
 
 ## Prerequisites
 
@@ -128,9 +145,53 @@ Values must not be blank. If you choose another model, download it with
 `ollama pull <model-name>` first. Restart Streamlit after changing configuration.
 Changing the embedding model also requires rebuilding the policy index.
 
-No Azure, OpenAI, Groq, or LangSmith configuration is required.
+No Azure, OpenAI, or Groq configuration is required. LangSmith is optional and
+is configured separately below.
 
-### 4. Start the application
+### 4. Configure LangSmith tracing (optional)
+
+Create a [LangSmith](https://smith.langchain.com/) account and API key, then add
+the following to your local `.env` file:
+
+```dotenv
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=replace-with-your-langsmith-api-key
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_PROJECT=onboardiq-rag-assistant
+```
+
+| Variable | Purpose |
+| --- | --- |
+| `LANGSMITH_TRACING` | Enables LangChain tracing when set to `true`. |
+| `LANGSMITH_API_KEY` | Authenticates trace uploads to LangSmith. Keep it secret. |
+| `LANGSMITH_ENDPOINT` | LangSmith API endpoint; the example uses the US region. |
+| `LANGSMITH_PROJECT` | Project name under which this app's traces appear. Use your existing project name if applicable. |
+
+The app loads `.env` at startup, and LangChain's tracing integration records
+chain runs without extra instrumentation in the application code. The installed
+integration also supports the older `LANGCHAIN_TRACING_V2`, `LANGCHAIN_API_KEY`,
+`LANGCHAIN_ENDPOINT`, and `LANGCHAIN_PROJECT` settings. Avoid conflicting values
+if both naming schemes are present.
+
+Use the endpoint for your account's region as described in the
+[LangSmith tracing documentation](https://docs.langchain.com/langsmith/trace-with-langchain).
+Restart Streamlit after changing these settings. Ask a policy question, then
+open the configured project in LangSmith to inspect the chain, retrieved
+documents, prompt/model inputs, generated output, timings, and any recorded
+errors. Token information depends on what the model integration reports.
+
+Tracing can upload questions, retrieved policy passages, employee information,
+conversation history, and model responses. Use only synthetic/demo data here;
+do not enable cloud tracing for confidential documents or real employee data
+without appropriate authorization and data-handling controls. Keep `.env`
+untracked and never publish API keys in screenshots or commits.
+
+To run without trace uploads, set `LANGSMITH_TRACING=false`, remove any legacy
+tracing-enable settings, and restart the app. LangSmith tracing is not required
+for local policy Q&A and does not itself provide automated answer-quality
+evaluation or production alerting.
+
+### 5. Start the application
 
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run app.py
@@ -215,9 +276,11 @@ not measure real-model answer quality.
 | Installation tries to compile `chroma-hnswlib` | Use 64-bit Python 3.11 and the installation command above. |
 | PyArrow reports a NumPy version conflict | Stop Streamlit and rerun the requirements installation. Keep the pinned PyArrow 17.0.0; do not upgrade NumPy to 2 with these LangChain pins. |
 | Responses are slow or inaccurate | Check available memory and Ollama status. The default 1.5B chat model prioritizes lower resource use over capability; a larger compatible chat model needs more resources. |
+| LangSmith traces do not appear | Check that tracing is enabled, the API key and regional endpoint are correct, and the selected project matches `LANGSMITH_PROJECT`. Check internet access and terminal upload errors, then restart Streamlit. Never paste the API key into logs or issue reports. |
 
-Application diagnostics appear in the terminal running Streamlit. No
-distributed tracing service is configured.
+Application diagnostics appear in the terminal running Streamlit. With
+optional LangSmith tracing enabled, RAG execution traces are also available in
+the configured LangSmith project.
 
 ## Demo scope and limitations
 
@@ -235,3 +298,6 @@ distributed tracing service is configured.
 - With the default configuration, model requests go to local Ollama. Initial
   downloads need internet access, and the sidebar logo loads from Wikimedia.
   Configuring a remote Ollama URL sends model requests to that server.
+- LangSmith tracing is optional cloud-hosted observability. When enabled, trace
+  content is sent to the configured LangSmith endpoint even though inference
+  remains local. Traces do not establish answer accuracy or production readiness.
